@@ -1,11 +1,12 @@
 package net.gwanghwa.account.service;
 
-import lombok.RequiredArgsConstructor;
-import net.gwanghwa.account.domain.Account;
-import net.gwanghwa.account.domain.AccountUser;
-import net.gwanghwa.account.repository.AccountRepository;
-import net.gwanghwa.account.repository.AccountUserRepository;
-import net.gwanghwa.account.type.AccountStatus;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-
-import javax.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import net.gwanghwa.account.domain.Account;
+import net.gwanghwa.account.domain.AccountUser;
+import net.gwanghwa.account.repository.AccountRepository;
+import net.gwanghwa.account.repository.AccountUserRepository;
+import net.gwanghwa.account.type.AccountStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -31,15 +31,15 @@ public class AccountService {
 	
 	@Autowired
     private AccountRepository accountRepository;
-
+    
 	// 계좌 생성
     @Transactional
     public String createAccount(String requestBody) throws Exception {
     	JsonElement jsonElement = JsonParser.parseString(requestBody);
 	    JsonObject jsonObject = jsonElement.getAsJsonObject();
 	    
-	    Long userId = Long.valueOf(jsonObject.get("userId").toString());
-	    Long initBalance = Long.valueOf(jsonObject.get("initBalance").toString());
+	    Long userId = Long.valueOf(jsonObject.get("userId").getAsLong());
+	    Long initBalance = Long.valueOf(jsonObject.get("initBalance").getAsLong());
 	    
 	    AccountUser accountUser = accountUserRepository.findByAccountUser(userId).orElse(new AccountUser());
 	    if(accountUser.getAccountUser() != userId) {
@@ -88,8 +88,8 @@ public class AccountService {
     	JsonElement jsonElement = JsonParser.parseString(requestBody);
 	    JsonObject jsonObject = jsonElement.getAsJsonObject();
 	    
-	    Long userId = Long.valueOf(jsonObject.get("userId").toString());
-	    String accountNumber = jsonObject.get("accountNumber").toString();
+	    Long userId = Long.valueOf(jsonObject.get("userId").getAsLong());
+	    String accountNumber = jsonObject.get("accountNumber").getAsString();
 	    
 	    // 사용자 또는 계좌가 없는 경우
 	    if( accountUserRepository.countByAccountUser(userId) == 0

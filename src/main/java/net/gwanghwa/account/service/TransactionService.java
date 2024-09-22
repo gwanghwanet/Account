@@ -31,17 +31,18 @@ import net.gwanghwa.account.type.TransactionType;
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
-	@Autowired
+
+    @Autowired
 	private AccountUserRepository accountUserRepository;
 	
-	@Autowired
+    @Autowired
     private AccountRepository accountRepository;
 	
-	@Autowired
+    @Autowired
 	private TransactionRepository transactionRepository;
 	
-	@Autowired
-	private final RedissonClient redissonClient;
+    @Autowired
+	private RedissonClient redissonClient;
 
 	// 잔액 사용
     @Transactional
@@ -49,9 +50,9 @@ public class TransactionService {
     	JsonElement jsonElement = JsonParser.parseString(requestBody);
 	    JsonObject jsonObject = jsonElement.getAsJsonObject();
 	    
-	    Long userId = Long.valueOf(jsonObject.get("userId").toString());
-	    String accountNumber = jsonObject.get("accountNumber").toString();
-	    Long amount = Long.valueOf(jsonObject.get("amount").toString());
+	    Long userId = Long.valueOf(jsonObject.get("userId").getAsLong());
+	    String accountNumber = jsonObject.get("accountNumber").getAsString();
+	    Long amount = Long.valueOf(jsonObject.get("amount").getAsLong());
 	    
 	    AccountUser accountUser = accountUserRepository.findByAccountUser(userId).orElse(new AccountUser());
 	    // 사용자가 없는 경우
@@ -105,6 +106,8 @@ public class TransactionService {
 		    jsonObject.addProperty("transactionId", transaction.getTransactionId());
 		    jsonObject.addProperty("amount", transaction.getAmount());
 		    jsonObject.addProperty("transactedAt", transaction.getTransactedAt().toString());
+		    
+		    rlock.unlock();
 	    } else {
 	    	jsonObject = new JsonObject();
 		    jsonObject.addProperty("accountNumber", accountNumber);
@@ -126,9 +129,9 @@ public class TransactionService {
     	JsonElement jsonElement = JsonParser.parseString(requestBody);
 	    JsonObject jsonObject = jsonElement.getAsJsonObject();
 	    
-	    String transactionId = jsonObject.get("transactionId").toString();
-	    String accountNumber = jsonObject.get("accountNumber").toString();
-	    Long amount = Long.valueOf(jsonObject.get("amount").toString());
+	    String transactionId = jsonObject.get("transactionId").getAsString();
+	    String accountNumber = jsonObject.get("accountNumber").getAsString();
+	    Long amount = Long.valueOf(jsonObject.get("amount").getAsLong());
 	    
 	    Optional<Transaction> optTransaction = transactionRepository.findByTransactionId(transactionId);
 	    Transaction transaction = optTransaction.get();
@@ -152,7 +155,7 @@ public class TransactionService {
 	    }
     	
 	    // 거래금액과 거래 취소 금액이 다른경우(부분 취소 불가능)
-	    if(amount.compareTo(transaction.getAmount()) == 0 ) {
+	    if(amount.compareTo(transaction.getAmount()) != 0 ) {
 	    	throw new Exception("PARTIAL_CANCELLATION_IMPOSSIBILITY");
 	    }
 
@@ -230,6 +233,7 @@ public class TransactionService {
         
         return respone;
     }
+    
     private RLock getLockForAccountNumber(String accountNumber) {
         RLock lock = redissonClient.getLock("lock:" + accountNumber);
 
